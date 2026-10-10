@@ -1,0 +1,7 @@
+{
+  "name": "Cổng Giám Sát Camera Mầm Non - Kids-Cam Secure",
+  "description": "Cổng giám sát CCTV trường mầm non bảo mật cao với phân quyền phụ huynh, OSD WebRTC, dynamic watermark và quản trị go2rtc/Cloudflare Tunnel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

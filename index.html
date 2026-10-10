@@ -1,0 +1,2403 @@
+<!doctype html>
+<html lang="vi" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cổng Giám Sát Camera Mầm Non - Kids-Cam Secure</title>
+    <meta name="description" content="Cổng giám sát CCTV trường mầm non bảo mật cao với phân quyền phụ huynh, OSD WebRTC, dynamic watermark và quản trị go2rtc/Cloudflare Tunnel." />
+    <meta property="og:title" content="Cổng Giám Sát Camera Mầm Non - Kids-Cam Secure" />
+    <meta property="og:description" content="Cổng giám sát CCTV trường mầm non bảo mật cao với phân quyền phụ huynh, OSD WebRTC, dynamic watermark và quản trị go2rtc/Cloudflare Tunnel." />
+    <meta property="og:type" content="website" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS v3 via CDN with custom config -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              cctv: {
+                bg: '#070B12',
+                card: '#0D1424',
+                surface: '#131D31',
+                border: '#1E2C48',
+                accent: '#06B6D4',
+                live: '#10B981',
+                alert: '#EF4444',
+                warn: '#F59E0B',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      /* Custom Scanline & CRT Effects */
+      .cctv-scanlines {
+        background: linear-gradient(
+          rgba(18, 16, 16, 0) 50%, 
+          rgba(0, 0, 0, 0.35) 50%
+        ), linear-gradient(
+          90deg,
+          rgba(255, 0, 0, 0.03),
+          rgba(0, 255, 0, 0.01),
+          rgba(0, 0, 255, 0.03)
+        );
+        background-size: 100% 4px, 6px 100%;
+        pointer-events: none;
+      }
+
+      .crt-flicker {
+        animation: subtleFlicker 0.15s infinite;
+      }
+
+      @keyframes subtleFlicker {
+        0% { opacity: 0.985; }
+        50% { opacity: 1; }
+        100% { opacity: 0.99; }
+      }
+
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+      }
+
+      .live-glow {
+        animation: pulseGlow 2s infinite ease-in-out;
+      }
+
+      /* Radar Sweep Animation for Privacy Shield */
+      @keyframes radarSweep {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      .radar-sweep {
+        animation: radarSweep 4s linear infinite;
+      }
+
+      /* Custom Scrollbar for CCTV Dark Theme */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #070B12;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1E2C48;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #06B6D4;
+      }
+    </style>
+  </head>
+  <body class="bg-[#070B12] text-slate-100 font-sans min-h-screen antialiased flex flex-col selection:bg-cyan-500 selection:text-black">
+
+    <!-- TOP CONTROL ROOM HEADER -->
+    <header class="border-b border-cctv-border bg-[#090E1A]/90 backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2.5">
+      <div class="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Logo & Branding -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 shadow-lg shadow-cyan-500/20 text-white">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-base sm:text-lg tracking-wider text-white flex items-center gap-1.5 font-mono">
+                KIDS-CAM <span class="text-cyan-400">SECURE</span>
+              </h1>
+              <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 hidden sm:inline-block">
+                v2.4-WebRTC
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">
+              Cổng Giám Sát Trực Tuyến Trường Mầm Non Quốc Tế • Chuẩn An Ninh Trẻ Em
+            </p>
+          </div>
+        </div>
+
+        <!-- Center: System Clock & Office Hours Indicator -->
+        <div class="flex items-center gap-3 bg-cctv-card/80 border border-cctv-border px-3 py-1.5 rounded-lg shadow-inner">
+          <!-- Live Clock -->
+          <div class="flex items-center gap-2 font-mono text-xs">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span id="systemClock" class="text-cyan-300 font-semibold tracking-wider">--:--:--</span>
+            <span class="text-slate-500 text-[10px] hidden md:inline">UTC+7</span>
+          </div>
+
+          <div class="h-3 w-[1px] bg-slate-700"></div>
+
+          <!-- Schedule Status Badge -->
+          <div id="scheduleBadge" class="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded font-mono font-medium">
+            <!-- Dynamically injected -->
+          </div>
+        </div>
+
+        <!-- Right Side: Fast Role Switcher & Off-Hours Test Toggle -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Off-Hours Simulation Toggle -->
+          <button 
+            id="toggleOffHoursBtn" 
+            onclick="toggleOffHoursSimulation()"
+            title="Nhấn để giả lập kiểm thử cơ chế khóa ngoài giờ hành chính (07:30 - 17:00)"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all border border-slate-700 hover:border-amber-500 bg-slate-800/80 text-slate-300 hover:text-amber-300"
+          >
+            <i data-lucide="hourglass" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span class="hidden md:inline">Giả Lập:</span>
+            <span id="offHoursBtnText" class="font-bold">Trong Giờ Học</span>
+          </button>
+
+          <!-- Quick Role Switcher Pill -->
+          <div class="flex items-center p-0.5 rounded-lg bg-slate-900 border border-cctv-border">
+            <button 
+              id="roleParentBtn"
+              onclick="setAppRole('parent')"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-white bg-cyan-600 shadow-sm shadow-cyan-600/40"
+            >
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>
+              <span>Phụ Huynh</span>
+            </button>
+            <button 
+              id="roleAdminBtn"
+              onclick="setAppRole('admin')"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200"
+            >
+              <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+              <span>Quản Trị Viên</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="flex-1 max-w-[1720px] w-full mx-auto p-3 sm:p-5 flex flex-col gap-4">
+
+      <!-- ============================================================== -->
+      <!-- SECTION A: PHỤ HUYNH (PARENT VIEW)                              -->
+      <!-- ============================================================== -->
+      <section id="parentViewSection" class="flex flex-col gap-4">
+        
+        <!-- Parent Profile & Filter Toolbar -->
+        <div class="bg-cctv-card border border-cctv-border rounded-xl p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 shadow-lg">
+          
+          <!-- Parent Switcher (For Demo/Testing) -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-cyan-950 border border-cyan-800 flex items-center justify-center text-cyan-400">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-[11px] text-slate-400 font-mono">TÀI KHOẢN PHỤ HUYNH THỬ NGHIỆM:</div>
+                <div class="relative inline-block">
+                  <select 
+                    id="parentSelect" 
+                    onchange="changeActiveParent(this.value)" 
+                    class="bg-cctv-surface border border-cctv-border hover:border-cyan-500 rounded-lg px-2.5 py-1 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer pr-7"
+                  >
+                    <!-- Injected via JS -->
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="h-6 w-[1px] bg-slate-700 hidden sm:block"></div>
+
+            <!-- Current Child & Class Badge -->
+            <div class="flex items-center gap-2 text-xs bg-slate-900/60 border border-slate-800 px-2.5 py-1.5 rounded-lg">
+              <i data-lucide="baby" class="w-4 h-4 text-pink-400"></i>
+              <div>
+                <span class="text-slate-400">Học sinh:</span>
+                <span id="parentChildName" class="font-bold text-pink-300">--</span> 
+                <span class="text-slate-500 mx-1">•</span> 
+                <span id="parentChildClass" class="text-cyan-300 font-mono font-medium">--</span>
+              </div>
+            </div>
+
+            <!-- Security Anti-recording Status -->
+            <div class="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-900/60 px-2.5 py-1.5 rounded-lg font-mono">
+              <i data-lucide="fingerprint" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Watermark Chống Quay Trộm: <strong class="text-emerald-300">BẬT</strong></span>
+            </div>
+          </div>
+
+          <!-- View Mode Controls (Grid 2x2 vs Single View vs All) -->
+          <div class="flex items-center gap-2 self-end lg:self-auto">
+            <span class="text-xs font-mono text-slate-400 hidden sm:inline">Chế độ xem:</span>
+            <div class="flex p-0.5 rounded-lg bg-slate-900 border border-cctv-border text-xs font-mono">
+              <button 
+                id="btnViewGrid" 
+                onclick="setParentViewMode('grid')" 
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded text-white bg-cyan-700 transition"
+                title="Xem dạng lưới 2x2"
+              >
+                <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Lưới 2x2</span>
+              </button>
+              <button 
+                id="btnViewSingle" 
+                onclick="setParentViewMode('single')" 
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded text-slate-400 hover:text-white transition"
+                title="Xem 1 Camera Chi Tiết"
+              >
+                <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">1 Camera</span>
+              </button>
+              <button 
+                id="btnViewAll" 
+                onclick="setParentViewMode('all')" 
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded text-slate-400 hover:text-white transition"
+                title="Xem Tất Cả Camera Được Phân Quyền"
+              >
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Tất cả</span>
+              </button>
+            </div>
+
+            <!-- Toggle OSD HUD -->
+            <button 
+              id="btnToggleOsd" 
+              onclick="toggleOsd()" 
+              class="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-900 border border-cctv-border text-xs font-mono text-slate-300 hover:text-cyan-400 transition"
+              title="Ẩn / Hiện thông số kỹ thuật OSD"
+            >
+              <i data-lucide="activity" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span class="hidden md:inline">OSD</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- CAMERA STREAM CONTAINER (CANVAS WEB-RTC SIMULATION) -->
+        <div id="cameraDisplayGrid" class="grid gap-4 transition-all duration-300">
+          <!-- Dynamically generated Camera Player Cards will be mounted here -->
+        </div>
+
+        <!-- Schedule Notification Banner -->
+        <div class="bg-cctv-card/60 border border-cctv-border/70 rounded-xl p-3 flex items-center justify-between text-xs text-slate-400">
+          <div class="flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-cyan-400 flex-shrink-0"></i>
+            <span>
+              Quy định giờ phát trực tiếp: <strong class="text-slate-200">07:30 - 17:00</strong> từ Thứ 2 đến Thứ 6. Camera tự động đóng màn trập bảo vệ ngoài giờ nhằm đảm bảo quyền riêng tư của giáo viên và trẻ.
+            </span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500 whitespace-nowrap ml-2 hidden sm:inline">
+            Nghị định 13/2023/NĐ-CP & TT 47/BGDĐT
+          </span>
+        </div>
+
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- SECTION B: QUẢN TRỊ VIÊN (ADMIN DASHBOARD)                     -->
+      <!-- ============================================================== -->
+      <section id="adminViewSection" class="hidden flex flex-col gap-4">
+        
+        <!-- Admin Stats Bar -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          <div class="bg-cctv-card border border-cctv-border rounded-xl p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-400 flex items-center justify-center">
+              <i data-lucide="video" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-[11px] font-mono text-slate-400">TỔNG CAMERA TRƯỜNG</div>
+              <div class="text-lg font-bold font-mono text-white flex items-center gap-2">
+                <span id="statCamCount">6/6</span>
+                <span class="text-[10px] text-emerald-400 font-normal">● Online 100%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-cctv-card border border-cctv-border rounded-xl p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-cyan-950/60 border border-cyan-800 text-cyan-400 flex items-center justify-center">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-[11px] font-mono text-slate-400">PHỤ HUYNH ĐĂNG KÝ</div>
+              <div class="text-lg font-bold font-mono text-white flex items-center gap-2">
+                <span id="statParentCount">4</span>
+                <span class="text-[10px] text-cyan-400 font-normal">Đã gán lớp</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-cctv-card border border-cctv-border rounded-xl p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-950/60 border border-blue-800 text-blue-400 flex items-center justify-center">
+              <i data-lucide="radio" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-[11px] font-mono text-slate-400">PHIÊN ĐANG XEM (LIVE)</div>
+              <div class="text-lg font-bold font-mono text-white flex items-center gap-2">
+                <span id="statLiveSessions">3</span>
+                <span class="text-[10px] text-blue-400 font-normal">WebRTC Peer</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-cctv-card border border-cctv-border rounded-xl p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-950/60 border border-indigo-800 text-indigo-400 flex items-center justify-center">
+              <i data-lucide="cloud" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-[11px] font-mono text-slate-400">CLOUDFLARE TUNNEL</div>
+              <div class="text-lg font-bold font-mono text-emerald-400 flex items-center gap-2">
+                <span>HEALTHY</span>
+                <span class="text-[10px] text-slate-400 font-mono">14.8 Mbps</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="flex flex-wrap items-center gap-1.5 border-b border-cctv-border pb-2">
+          <button 
+            id="tabBtnCameras" 
+            onclick="setAdminTab('cameras')"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-cyan-400 bg-cctv-surface border border-cctv-border"
+          >
+            <i data-lucide="video" class="w-4 h-4"></i>
+            <span>1. Quản Lý Camera</span>
+          </button>
+          <button 
+            id="tabBtnParents" 
+            onclick="setAdminTab('parents')"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-white"
+          >
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>2. Phụ Huynh & Phân Quyền</span>
+          </button>
+          <button 
+            id="tabBtnStreamer" 
+            onclick="setAdminTab('streamer')"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-white"
+          >
+            <i data-lucide="server" class="w-4 h-4"></i>
+            <span>3. Hạ Tầng go2rtc & Cloudflare</span>
+          </button>
+          <button 
+            id="tabBtnLogs" 
+            onclick="setAdminTab('logs')"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-white"
+          >
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+            <span>4. Nhật Ký Truy Cập Thời Gian Thực</span>
+          </button>
+        </div>
+
+        <!-- TAB 1 CONTENT: QUẢN LÝ CAMERA -->
+        <div id="adminTabContentCameras" class="flex flex-col gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-cctv-card border border-cctv-border p-3.5 rounded-xl">
+            <div>
+              <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+                <i data-lucide="camera" class="w-4 h-4 text-cyan-400"></i>
+                DANH SÁCH TOÀN BỘ CAMERA TRƯỜNG HỌC
+              </h3>
+              <p class="text-xs text-slate-400">Khai báo luồng RTSP Substream & Mainstream từ đầu ghi NVR / Camera IP</p>
+            </div>
+            <button 
+              onclick="openAddCameraModal()"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition shadow-md shadow-cyan-600/30"
+            >
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Thêm Camera Mới</span>
+            </button>
+          </div>
+
+          <!-- Camera Table -->
+          <div class="bg-cctv-card border border-cctv-border rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-cctv-surface text-slate-400 font-mono text-[11px] uppercase border-b border-cctv-border">
+                  <tr>
+                    <th class="px-4 py-3">Mã & Tên Camera</th>
+                    <th class="px-4 py-3">Vị Trí & Lớp</th>
+                    <th class="px-4 py-3">RTSP Substream</th>
+                    <th class="px-4 py-3">Thông Số Kỹ Thuật</th>
+                    <th class="px-4 py-3">Trạng Thái</th>
+                    <th class="px-4 py-3 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="cameraTableBody" class="divide-y divide-cctv-border font-mono text-slate-300">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2 CONTENT: PHỤ HUYNH & PHÂN QUYỀN CAMERA -->
+        <div id="adminTabContentParents" class="hidden flex flex-col gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-cctv-card border border-cctv-border p-3.5 rounded-xl">
+            <div>
+              <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+                <i data-lucide="key-round" class="w-4 h-4 text-emerald-400"></i>
+                MA TRẬN PHÂN QUYỀN CAMERA CHO PHỤ HUYNH
+              </h3>
+              <p class="text-xs text-slate-400">Chỉ định cụ thể phụ huynh được phép xem những camera nào (Đảm bảo an toàn dữ liệu)</p>
+            </div>
+            <button 
+              onclick="openAddParentModal()"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition shadow-md shadow-emerald-600/30"
+            >
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Thêm Tài Khoản Phụ Huynh</span>
+            </button>
+          </div>
+
+          <!-- Parents Table -->
+          <div class="bg-cctv-card border border-cctv-border rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-cctv-surface text-slate-400 font-mono text-[11px] uppercase border-b border-cctv-border">
+                  <tr>
+                    <th class="px-4 py-3">Họ Tên Phụ Huynh & SĐT</th>
+                    <th class="px-4 py-3">Thông Tin Bé & Lớp</th>
+                    <th class="px-4 py-3">Camera Được Phân Quyền</th>
+                    <th class="px-4 py-3">Trạng Thái</th>
+                    <th class="px-4 py-3 text-right">Hành Động</th>
+                  </tr>
+                </thead>
+                <tbody id="parentTableBody" class="divide-y divide-cctv-border text-slate-300">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3 CONTENT: HẠ TẦNG GO2RTC & CLOUDFLARE TUNNEL -->
+        <div id="adminTabContentStreamer" class="hidden flex flex-col gap-4">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- go2rtc / MediaMTX Re-streamer Settings Card -->
+            <div class="bg-cctv-card border border-cctv-border rounded-xl p-4 flex flex-col gap-4">
+              <div class="flex items-center justify-between border-b border-cctv-border pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded bg-cyan-950 border border-cyan-800 text-cyan-400 flex items-center justify-center">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold font-mono text-white">RE-STREAMER CORE (go2rtc / MediaMTX)</h3>
+                    <p class="text-[11px] text-slate-400">Máy chủ chuyển đổi luồng RTSP sang WebRTC Low-Latency (&lt;200ms)</p>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800">
+                  ONLINE
+                </span>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block text-slate-400 font-mono text-[11px] mb-1">Cơ Chế Re-Streamer:</label>
+                  <select id="cfgEngine" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs focus:ring-1 focus:ring-cyan-500">
+                    <option value="go2rtc" selected>go2rtc v1.9.4 (Khuyến nghị cho WebRTC WHIP/WHEP low-latency)</option>
+                    <option value="mediamtx">MediaMTX v1.8.2 (Hỗ trợ RTSP / WebRTC / HLS multi-protocol)</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-mono text-[11px] mb-1">Server Host IP / Domain:</label>
+                    <input type="text" id="cfgHost" value="cctv-core.mamnon-kidssecure.edu.vn" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs" />
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 font-mono text-[11px] mb-1">WebRTC Port (TCP/UDP ICE):</label>
+                    <input type="number" id="cfgWebrtcPort" value="8555" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-mono text-[11px] mb-1">RTSP Ingest Port:</label>
+                    <input type="number" id="cfgRtspPort" value="8554" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs" />
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 font-mono text-[11px] mb-1">go2rtc API / UI Port:</label>
+                    <input type="number" id="cfgApiPort" value="1984" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-slate-400 font-mono text-[11px] mb-1">Phần Cứng Tăng Tốc Mã Hóa (Hardware Acceleration):</label>
+                  <select id="cfgHwAccel" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-xs">
+                    <option value="quicksync" selected>Intel QuickSync VAAPI (Tiết kiệm CPU & độ trễ thấp)</option>
+                    <option value="nvenc">NVIDIA NVENC (CUDA GPU H.264)</option>
+                    <option value="software">CPU Software (libx264 - Không GPU)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-cctv-border">
+                <button onclick="testRestreamerPing()" class="px-3 py-1.5 rounded-lg border border-cyan-800 text-cyan-400 hover:bg-cyan-950/60 text-xs font-mono transition flex items-center gap-1.5">
+                  <i data-lucide="activity" class="w-3.5 h-3.5"></i>
+                  <span>Test Ping API</span>
+                </button>
+                <button onclick="saveStreamerConfig()" class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition flex items-center gap-1.5">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                  <span>Lưu Cấu Hình Core</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Cloudflare Tunnel Zero-Trust Edge Card -->
+            <div class="bg-cctv-card border border-cctv-border rounded-xl p-4 flex flex-col gap-4">
+              <div class="flex items-center justify-between border-b border-cctv-border pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded bg-amber-950 border border-amber-800 text-amber-400 flex items-center justify-center">
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold font-mono text-white">CLOUDFLARE TUNNEL (Zero Trust Edge)</h3>
+                    <p class="text-[11px] text-slate-400">Xuất bản video an toàn qua HTTPS mà không cần mở Port Router (NAT Loopback)</p>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  CONNECTED
+                </span>
+              </div>
+
+              <div class="space-y-3 text-xs font-mono">
+                <div class="bg-cctv-surface p-3 rounded-lg border border-cctv-border space-y-2">
+                  <div class="flex items-center justify-between text-slate-400">
+                    <span>Tunnel Identifier:</span>
+                    <span class="text-slate-200">cctv-kidssecure-prod-tunnel</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-400">
+                    <span>Tunnel UUID:</span>
+                    <span class="text-cyan-400">e8b23c91-4fa2-47d3-8f0a-112cb90145ef</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-400">
+                    <span>Public HTTPS Domain:</span>
+                    <span class="text-emerald-400 font-bold">https://cctv.mamnon-kidssecure.edu.vn</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-400">
+                    <span>SSL Certificate Status:</span>
+                    <span class="text-emerald-400">VALID (Cloudflare Edge SSL - TLS 1.3 Strict)</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-400">
+                    <span>Active Edge Connectors:</span>
+                    <span class="text-slate-200">4 Hops (Tokyo, Singapore, Hong Kong, Osaka)</span>
+                  </div>
+                </div>
+
+                <!-- Network Metrics Bar -->
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="bg-cctv-surface p-2 rounded-lg border border-cctv-border">
+                    <div class="text-[10px] text-slate-400">BĂNG THÔNG RA</div>
+                    <div class="text-sm font-bold text-cyan-400 mt-0.5">14.8 Mbps</div>
+                  </div>
+                  <div class="bg-cctv-surface p-2 rounded-lg border border-cctv-border">
+                    <div class="text-[10px] text-slate-400">ĐỘ TRỄ TRUNG BÌNH</div>
+                    <div class="text-sm font-bold text-emerald-400 mt-0.5">16 ms</div>
+                  </div>
+                  <div class="bg-cctv-surface p-2 rounded-lg border border-cctv-border">
+                    <div class="text-[10px] text-slate-400">TỶ LỆ MẤT GÓI</div>
+                    <div class="text-sm font-bold text-slate-200 mt-0.5">0.01%</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                  <button onclick="pingCloudflareTunnel()" class="px-3 py-1.5 rounded-lg border border-amber-800 text-amber-400 hover:bg-amber-950/60 text-xs transition flex items-center gap-1.5">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    <span>Kiểm Tra Độ Trễ Tunnel</span>
+                  </button>
+                  <button onclick="restartTunnelService()" class="px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-500 text-slate-300 text-xs transition flex items-center gap-1.5">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Khởi Động Lại Connector</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 4 CONTENT: NHẬT KÝ TRUY CẬP (ACCESS AUDIT LOGS) -->
+        <div id="adminTabContentLogs" class="hidden flex flex-col gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-cctv-card border border-cctv-border p-3.5 rounded-xl">
+            <div>
+              <h3 class="text-sm font-bold text-white font-mono flex items-center gap-2">
+                <i data-lucide="list-collapse" class="w-4 h-4 text-cyan-400"></i>
+                NHẬT KÝ TRUY CẬP REAL-TIME & CẢNH BÁO AN NINH
+              </h3>
+              <p class="text-xs text-slate-400">Ghi nhận minh bạch lịch sử phụ huynh xem camera, địa chỉ IP và cảnh báo bất thường</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                onclick="exportLogsToCsv()" 
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-mono transition"
+              >
+                <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>Xuất File CSV</span>
+              </button>
+              <button 
+                onclick="refreshAccessLogs()" 
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-mono font-medium transition"
+              >
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Làm Mới</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="bg-cctv-surface border border-cctv-border p-3 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 flex-1 max-w-md">
+              <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
+              <input 
+                type="text" 
+                id="logSearchInput" 
+                oninput="filterLogs()" 
+                placeholder="Tìm theo tên phụ huynh, SĐT, IP hoặc mã Camera..." 
+                class="bg-cctv-card border border-cctv-border rounded-lg px-3 py-1.5 text-white w-full text-xs font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
+            </div>
+
+            <div class="flex items-center gap-2 font-mono">
+              <span class="text-slate-400">Bộ lọc trạng thái:</span>
+              <select id="logStatusFilter" onchange="filterLogs()" class="bg-cctv-card border border-cctv-border rounded-lg px-2.5 py-1 text-white text-xs">
+                <option value="all">Tất cả phiên</option>
+                <option value="active">Đang xem trực tiếp (Active)</option>
+                <option value="closed">Đã ngắt kết nối (Closed)</option>
+                <option value="warning">Có cảnh báo bảo mật</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Logs Table -->
+          <div class="bg-cctv-card border border-cctv-border rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-cctv-surface text-slate-400 font-mono text-[11px] uppercase border-b border-cctv-border">
+                  <tr>
+                    <th class="px-4 py-3">Thời Gian Bắt Đầu</th>
+                    <th class="px-4 py-3">Phụ Huynh & SĐT</th>
+                    <th class="px-4 py-3">Camera Quan Sát</th>
+                    <th class="px-4 py-3">Địa Chỉ IP & Thiết Bị</th>
+                    <th class="px-4 py-3">Thời Lượng</th>
+                    <th class="px-4 py-3">Trạng Thái / Cảnh Báo</th>
+                    <th class="px-4 py-3 text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="accessLogsTableBody" class="divide-y divide-cctv-border text-slate-300 font-mono">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- FOOTER STATUS & COPYRIGHT -->
+    <footer class="border-t border-cctv-border bg-[#090E1A] px-4 py-3 text-xs text-slate-500 font-mono mt-auto">
+      <div class="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5 text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            WebRTC WHIP/WHEP Core Active
+          </span>
+          <span>•</span>
+          <span>Zero-Latency Streamer: go2rtc</span>
+          <span>•</span>
+          <span>Tunnel: Cloudflare Managed</span>
+        </div>
+        <div>
+          Hệ thống giám sát bảo mật Kids-Cam Secure &copy; 2026. Tuân thủ tiêu chuẩn an toàn thông tin trường học.
+        </div>
+      </div>
+    </footer>
+
+    <!-- ============================================================== -->
+    <!-- MODALS: POPUPS FOR ADMIN ACTIONS                               -->
+    <!-- ============================================================== -->
+
+    <!-- MODAL 1: Phân Quyền Camera Cho Phụ Huynh -->
+    <div id="permissionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+      <div class="bg-cctv-card border border-cctv-border rounded-xl w-full max-w-xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-cctv-border flex items-center justify-between bg-cctv-surface">
+          <div class="flex items-center gap-2">
+            <i data-lucide="key-round" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="font-bold text-sm text-white font-mono">CẤU HÌNH PHÂN QUYỀN CAMERA</h3>
+          </div>
+          <button onclick="closePermissionModal()" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-4 flex flex-col gap-3">
+          <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-xs">
+            <div class="font-semibold text-white" id="modalParentName">--</div>
+            <div class="text-slate-400 font-mono" id="modalParentInfo">--</div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono text-slate-300">Tích chọn camera được phép xem:</span>
+            <div class="flex items-center gap-2">
+              <button onclick="checkAllPermissions(true)" class="text-[11px] font-mono text-cyan-400 hover:underline">Chọn tất cả</button>
+              <span class="text-slate-600">|</span>
+              <button onclick="checkAllPermissions(false)" class="text-[11px] font-mono text-slate-400 hover:underline">Bỏ chọn</button>
+            </div>
+          </div>
+
+          <!-- Camera Checklist -->
+          <div id="modalCameraChecklist" class="max-h-60 overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamically injected checkboxes -->
+          </div>
+        </div>
+
+        <div class="p-3 border-t border-cctv-border bg-cctv-surface flex items-center justify-end gap-2">
+          <button onclick="closePermissionModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-800">
+            Hủy Bỏ
+          </button>
+          <button onclick="saveParentPermissions()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">
+            Lưu Cấu Hình Phân Quyền
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: Thêm Camera Mới -->
+    <div id="addCameraModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+      <div class="bg-cctv-card border border-cctv-border rounded-xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-cctv-border flex items-center justify-between bg-cctv-surface">
+          <div class="flex items-center gap-2">
+            <i data-lucide="video" class="w-5 h-5 text-cyan-400"></i>
+            <h3 class="font-bold text-sm text-white font-mono">THÊM CAMERA MỚI VÀO HỆ THỐNG</h3>
+          </div>
+          <button onclick="closeAddCameraModal()" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form id="addCamForm" onsubmit="handleAddNewCamera(event)" class="p-4 flex flex-col gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 font-mono mb-1">Tên Hiển Thị Camera:</label>
+            <input type="text" id="newCamName" required placeholder="Ví dụ: CAM-07: PHÒNG SINH HOẠT ÂM NHẠC" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Mã Định Danh (Code):</label>
+              <input type="text" id="newCamCode" required placeholder="CAM-MUSIC-01" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Vị Trí / Khu Vực:</label>
+              <input type="text" id="newCamLocation" required placeholder="Tầng 2 - Phòng 204" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-mono mb-1">Lớp Học Phụ Trách:</label>
+            <input type="text" id="newCamGrade" required placeholder="Lớp Mầm 1 / Chung Toàn Trường" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-mono mb-1">Đường Dẫn RTSP Substream:</label>
+            <input type="text" id="newCamRtsp" required placeholder="rtsp://admin:SecCam2026@192.168.1.107:554/ch1/sub" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono text-[11px]" />
+          </div>
+
+          <div class="p-3 border-t border-cctv-border bg-cctv-surface -mx-4 -mb-4 mt-2 flex items-center justify-end gap-2">
+            <button type="button" onclick="closeAddCameraModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800">
+              Hủy
+            </button>
+            <button type="submit" class="px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold text-white">
+              Thêm & Khởi Động Luồng
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 3: Thêm Tài Khoản Phụ Huynh Mới -->
+    <div id="addParentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+      <div class="bg-cctv-card border border-cctv-border rounded-xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-cctv-border flex items-center justify-between bg-cctv-surface">
+          <div class="flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="font-bold text-sm text-white font-mono">TẠO TÀI KHOẢN PHỤ HUYNH MỚI</h3>
+          </div>
+          <button onclick="closeAddParentModal()" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form id="addParentForm" onsubmit="handleAddNewParent(event)" class="p-4 flex flex-col gap-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Họ Tên Phụ Huynh:</label>
+              <input type="text" id="newParentName" required placeholder="Nguyễn Văn A" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Số Điện Thoại:</label>
+              <input type="text" id="newParentPhone" required placeholder="0987.654.321" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Tên Bé (Con):</label>
+              <input type="text" id="newParentChild" required placeholder="Bé Bo" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-mono mb-1">Lớp Học:</label>
+              <input type="text" id="newParentClass" required placeholder="Lớp Chồi 1" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-mono mb-1">Email Thông Báo:</label>
+            <input type="email" id="newParentEmail" required placeholder="phuhuynh@example.com" class="w-full bg-cctv-surface border border-cctv-border rounded-lg p-2 text-white font-mono" />
+          </div>
+
+          <div class="p-3 border-t border-cctv-border bg-cctv-surface -mx-4 -mb-4 mt-2 flex items-center justify-end gap-2">
+            <button type="button" onclick="closeAddParentModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800">
+              Hủy
+            </button>
+            <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white">
+              Tạo & Gán Quyền Mặc Định
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ============================================================== -->
+    <!-- JAVASCRIPT: APPLICATION CORE LOGIC & SIMULATION ENGINE         -->
+    <!-- ============================================================== -->
+    <script>
+      // ==========================================
+      // 1. MOCK DATA & APP INITIAL STATE
+      // ==========================================
+      const INITIAL_STATE = {
+        currentRole: 'parent', // 'parent' or 'admin'
+        selectedParentId: 'p1',
+        isOffHoursSimulation: false, // Flag to force test off-hours lock
+        parentViewMode: 'grid', // 'grid' | 'single' | 'all'
+        selectedSingleCamId: 'cam-1',
+        showOsd: true,
+        adminActiveTab: 'cameras',
+        editingParentId: null,
+
+        // Cameras list in school
+        cameras: [
+          {
+            id: 'cam-1',
+            name: 'CAM-01: LỚP MẦM 1 - GÓC HỌC TẬP',
+            code: 'CAM-MAM1-STUDY',
+            location: 'Tầng 1 - Phòng 101',
+            grade: 'Lớp Mầm 1',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.101:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.101:554/ch1/main',
+            resolution: '1920x1080',
+            fps: 30,
+            bitrate: 840,
+            status: 'online',
+            type: 'study'
+          },
+          {
+            id: 'cam-2',
+            name: 'CAM-02: LỚP MẦM 1 - KHU ĂN & NGỦ TRƯA',
+            code: 'CAM-MAM1-REST',
+            location: 'Tầng 1 - Phòng 101B',
+            grade: 'Lớp Mầm 1',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.102:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.102:554/ch1/main',
+            resolution: '1920x1080',
+            fps: 30,
+            bitrate: 790,
+            status: 'online',
+            type: 'sleep'
+          },
+          {
+            id: 'cam-3',
+            name: 'CAM-03: SÂN CHƠI CỎ & LIÊN HOÀN NGOÀI TRỜI',
+            code: 'CAM-OUTDOOR-PLAY',
+            location: 'Khuôn viên ngoài trời',
+            grade: 'Chung Toàn Trường',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.103:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.103:554/ch1/main',
+            resolution: '1920x1080',
+            fps: 30,
+            bitrate: 960,
+            status: 'online',
+            type: 'outdoor'
+          },
+          {
+            id: 'cam-4',
+            name: 'CAM-04: BỂ VẦY & VUI CHƠI CÁT NƯỚC',
+            code: 'CAM-WATER-SAND',
+            location: 'Khu vận động thể chất',
+            grade: 'Chung Toàn Trường',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.104:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.104:554/ch1/main',
+            resolution: '1920x1080',
+            fps: 30,
+            bitrate: 880,
+            status: 'online',
+            type: 'pool'
+          },
+          {
+            id: 'cam-5',
+            name: 'CAM-05: NHÀ ĂN BÁN TRÚ & BẾP DINH DƯỠNG',
+            code: 'CAM-KITCHEN-EAT',
+            location: 'Tầng Trệt - Khu Bán Trú',
+            grade: 'Khu Dinh Dưỡng',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.105:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.105:554/ch1/main',
+            resolution: '1280x720',
+            fps: 30,
+            bitrate: 720,
+            status: 'online',
+            type: 'kitchen'
+          },
+          {
+            id: 'cam-6',
+            name: 'CAM-06: CỔNG ĐÓN TRẺ & SẢNH LỄ TÂN',
+            code: 'CAM-GATE-LOBBY',
+            location: 'Cổng chính số 1',
+            grade: 'Cổng Trường',
+            rtspSub: 'rtsp://admin:SecCam2026@192.168.1.106:554/ch1/sub',
+            rtspMain: 'rtsp://admin:SecCam2026@192.168.1.106:554/ch1/main',
+            resolution: '1920x1080',
+            fps: 30,
+            bitrate: 910,
+            status: 'online',
+            type: 'gate'
+          }
+        ],
+
+        // Parents and their distinct access rights
+        parents: [
+          {
+            id: 'p1',
+            name: 'Chị Nguyễn Lan Anh',
+            phone: '0912.345.678',
+            email: 'lananh.nguyen@gmail.com',
+            childName: 'Nguyễn Hoàng Bơ',
+            childClass: 'Lớp Mầm 1',
+            teacher: 'Cô Thu Trang & Cô Mai',
+            allowedCamIds: ['cam-1', 'cam-2', 'cam-3', 'cam-6'],
+            status: 'active',
+            ip: '113.161.45.89'
+          },
+          {
+            id: 'p2',
+            name: 'Anh Trần Quốc Tuấn',
+            phone: '0988.765.432',
+            email: 'tuantran.tech@fpt.com',
+            childName: 'Trần Gia Sóc',
+            childClass: 'Lớp Chồi 2',
+            teacher: 'Cô Ngọc Ánh',
+            allowedCamIds: ['cam-3', 'cam-5', 'cam-6'],
+            status: 'active',
+            ip: '14.232.180.12'
+          },
+          {
+            id: 'p3',
+            name: 'Chị Lê Hoàng Yến',
+            phone: '0903.112.233',
+            email: 'yenle.designer@gmail.com',
+            childName: 'Lê Thảo Kẹo',
+            childClass: 'Lớp Lá 1',
+            teacher: 'Cô Phương Thảo',
+            allowedCamIds: ['cam-3', 'cam-4', 'cam-6'],
+            status: 'active',
+            ip: '27.72.61.94'
+          },
+          {
+            id: 'p4',
+            name: 'Anh Hoàng Minh Đức',
+            phone: '0977.889.900',
+            email: 'duc.hoang@vietcombank.com.vn',
+            childName: 'Hoàng Bảo Thỏ',
+            childClass: 'Nhà Trẻ Vàng',
+            teacher: 'Cô Minh Châu',
+            allowedCamIds: ['cam-6'],
+            status: 'active',
+            ip: '118.69.191.22'
+          }
+        ],
+
+        // Real-time access logs
+        accessLogs: [
+          {
+            id: 'log-1',
+            time: '08:15:22 - 08/10/2026',
+            parentName: 'Chị Nguyễn Lan Anh',
+            parentPhone: '0912.345.678',
+            cameraName: 'CAM-01: Lớp Mầm 1',
+            ip: '113.161.45.89',
+            device: 'Safari Mobile / iPhone 15 Pro',
+            duration: '22 phút 15 giây',
+            status: 'active',
+            warning: null
+          },
+          {
+            id: 'log-2',
+            time: '08:24:10 - 08/10/2026',
+            parentName: 'Anh Trần Quốc Tuấn',
+            parentPhone: '0988.765.432',
+            cameraName: 'CAM-03: Sân Chơi Cỏ Ngoài Trời',
+            ip: '14.232.180.12',
+            device: 'Chrome 128 / Windows 11',
+            duration: '14 phút 02 giây',
+            status: 'active',
+            warning: null
+          },
+          {
+            id: 'log-3',
+            time: '08:30:05 - 08/10/2026',
+            parentName: 'Chị Lê Hoàng Yến',
+            parentPhone: '0903.112.233',
+            cameraName: 'CAM-04: Bể Vầy Trẻ Em',
+            ip: '27.72.61.94',
+            device: 'Edge 128 / MacOS Sonoma',
+            duration: '8 phút 41 giây',
+            status: 'active',
+            warning: null
+          },
+          {
+            id: 'log-4',
+            time: '07:35:12 - 08/10/2026',
+            parentName: 'Anh Hoàng Minh Đức',
+            parentPhone: '0977.889.900',
+            cameraName: 'CAM-06: Cổng Đón Trẻ',
+            ip: '118.69.191.22',
+            device: 'Chrome Mobile / Galaxy S24',
+            duration: '52 phút 18 giây',
+            status: 'closed',
+            warning: 'Thời lượng xem > 45 phút'
+          }
+        ]
+      };
+
+      let state = { ...INITIAL_STATE };
+
+      // ==========================================
+      // 2. TIMING & OFFICE-HOURS LOGIC
+      // Office hours: 07:30 to 17:00 (Mon - Fri)
+      // ==========================================
+      function isSchoolStreamingActive() {
+        if (state.isOffHoursSimulation) {
+          return false; // Manually forced off-hours for testing
+        }
+        const now = new Date();
+        const day = now.getDay(); // 0 is Sunday, 6 is Saturday
+        // If weekend, locked
+        if (day === 0 || day === 6) {
+          return false;
+        }
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const currentMinutes = hours * 60 + minutes;
+        const startMinutes = 7 * 60 + 30; // 07:30
+        const endMinutes = 17 * 60;       // 17:00
+        return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+      }
+
+      function updateClockAndScheduleBadge() {
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0];
+        const clockEl = document.getElementById('systemClock');
+        if (clockEl) clockEl.textContent = timeStr;
+
+        const isStreamOpen = isSchoolStreamingActive();
+        const badgeEl = document.getElementById('scheduleBadge');
+        const offHoursBtnText = document.getElementById('offHoursBtnText');
+
+        if (offHoursBtnText) {
+          offHoursBtnText.textContent = state.isOffHoursSimulation ? 'Ngoài Giờ (ĐÃ KHÓA)' : 'Trong Giờ Học';
+        }
+
+        if (badgeEl) {
+          if (isStreamOpen) {
+            badgeEl.className = "flex items-center gap-1.5 text-xs px-2 py-0.5 rounded font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/60";
+            badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ĐANG TRONG GIỜ PHÉP (07:30-17:00)`;
+          } else {
+            badgeEl.className = "flex items-center gap-1.5 text-xs px-2 py-0.5 rounded font-mono font-medium bg-red-950/80 text-red-400 border border-red-800/60";
+            badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400"></span> NGOÀI GIỜ (KHÓA BẢO VỆ)`;
+          }
+        }
+      }
+
+      setInterval(updateClockAndScheduleBadge, 1000);
+
+      function toggleOffHoursSimulation() {
+        state.isOffHoursSimulation = !state.isOffHoursSimulation;
+        updateClockAndScheduleBadge();
+        showToast(
+          state.isOffHoursSimulation 
+            ? 'ĐÃ BẬT GIẢ LẬP: Ngoài giờ học (Toàn bộ camera đóng màn khóa an ninh)'
+            : 'ĐÃ TẮT GIẢ LẬP: Mở lại luồng trực tiếp trong giờ học',
+          state.isOffHoursSimulation ? 'warn' : 'info'
+        );
+      }
+
+      // ==========================================
+      // 3. ROLE SWITCHER & NAVIGATION
+      // ==========================================
+      function setAppRole(role) {
+        state.currentRole = role;
+        const parentSec = document.getElementById('parentViewSection');
+        const adminSec = document.getElementById('adminViewSection');
+        const parentBtn = document.getElementById('roleParentBtn');
+        const adminBtn = document.getElementById('roleAdminBtn');
+
+        if (role === 'parent') {
+          parentSec.classList.remove('hidden');
+          adminSec.classList.add('hidden');
+          parentBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-white bg-cyan-600 shadow-sm shadow-cyan-600/40";
+          adminBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200";
+          renderParentSection();
+        } else {
+          parentSec.classList.add('hidden');
+          adminSec.classList.remove('hidden');
+          adminBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-white bg-amber-600 shadow-sm shadow-amber-600/40";
+          parentBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200";
+          renderAdminSection();
+        }
+
+        if (window.lucide) lucide.createIcons();
+      }
+
+      // ==========================================
+      // 4. PARENT VIEW RENDERING & CONTROLS
+      // ==========================================
+      function renderParentSection() {
+        populateParentDropdown();
+        updateActiveParentInfo();
+        renderCameraStreams();
+      }
+
+      function populateParentDropdown() {
+        const select = document.getElementById('parentSelect');
+        if (!select) return;
+        select.innerHTML = state.parents.map(p => `
+          <option value="${p.id}" ${p.id === state.selectedParentId ? 'selected' : ''}>
+            ${p.name} - ${p.childClass}
+          </option>
+        `).join('');
+      }
+
+      function changeActiveParent(parentId) {
+        state.selectedParentId = parentId;
+        updateActiveParentInfo();
+        renderCameraStreams();
+        showToast(`Đã chuyển sang tài khoản phụ huynh: ${getActiveParent().name}`, 'info');
+      }
+
+      function getActiveParent() {
+        return state.parents.find(p => p.id === state.selectedParentId) || state.parents[0];
+      }
+
+      function updateActiveParentInfo() {
+        const parent = getActiveParent();
+        const childNameEl = document.getElementById('parentChildName');
+        const childClassEl = document.getElementById('parentChildClass');
+        if (childNameEl) childNameEl.textContent = parent.childName;
+        if (childClassEl) childClassEl.textContent = parent.childClass;
+      }
+
+      function setParentViewMode(mode) {
+        state.parentViewMode = mode;
+        const btnGrid = document.getElementById('btnViewGrid');
+        const btnSingle = document.getElementById('btnViewSingle');
+        const btnAll = document.getElementById('btnViewAll');
+
+        [btnGrid, btnSingle, btnAll].forEach(b => {
+          b.className = "flex items-center gap-1 px-2.5 py-1.5 rounded text-slate-400 hover:text-white transition";
+        });
+
+        if (mode === 'grid') btnGrid.className = "flex items-center gap-1 px-2.5 py-1.5 rounded text-white bg-cyan-700 transition";
+        if (mode === 'single') btnSingle.className = "flex items-center gap-1 px-2.5 py-1.5 rounded text-white bg-cyan-700 transition";
+        if (mode === 'all') btnAll.className = "flex items-center gap-1 px-2.5 py-1.5 rounded text-white bg-cyan-700 transition";
+
+        renderCameraStreams();
+      }
+
+      function toggleOsd() {
+        state.showOsd = !state.showOsd;
+        showToast(state.showOsd ? 'Đã hiển thị thông số OSD' : 'Đã ẩn thông số OSD', 'info');
+      }
+
+      // Track active animation loops for canvases
+      const activeCanvasLoops = new Map();
+
+      function renderCameraStreams() {
+        const container = document.getElementById('cameraDisplayGrid');
+        if (!container) return;
+
+        // Clear existing canvas loops
+        activeCanvasLoops.forEach(cancelId => cancelAnimationFrame(cancelId));
+        activeCanvasLoops.clear();
+
+        const parent = getActiveParent();
+        let allowedCameras = state.cameras.filter(c => parent.allowedCamIds.includes(c.id));
+
+        if (allowedCameras.length === 0) {
+          container.className = "flex items-center justify-center p-12 bg-cctv-card border border-cctv-border rounded-xl text-center";
+          container.innerHTML = `
+            <div class="max-w-md">
+              <i data-lucide="shield-alert" class="w-12 h-12 text-amber-400 mx-auto mb-3"></i>
+              <h3 class="text-base font-bold text-white font-mono">CHƯA ĐƯỢC CẤP QUYỀN TRUY CẬP CAMERA NÀO</h3>
+              <p class="text-xs text-slate-400 mt-2">
+                Tài khoản phụ huynh <strong class="text-cyan-400">${parent.name}</strong> hiện chưa được Ban Quản Trị gán quyền camera lớp. Vui lòng liên hệ nhà trường hoặc chuyển sang quyền Quản Trị Viên để phân quyền thử nghiệm.
+              </p>
+            </div>
+          `;
+          if (window.lucide) lucide.createIcons();
+          return;
+        }
+
+        let displayedCameras = allowedCameras;
+        if (state.parentViewMode === 'single') {
+          // Find selected or fallback
+          let targetCam = allowedCameras.find(c => c.id === state.selectedSingleCamId) || allowedCameras[0];
+          displayedCameras = [targetCam];
+          container.className = "grid grid-cols-1 gap-4";
+        } else if (state.parentViewMode === 'grid') {
+          displayedCameras = allowedCameras.slice(0, 4); // Max 4 for 2x2
+          container.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+        } else {
+          // All
+          container.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4";
+        }
+
+        // Build HTML for each camera stream card
+        container.innerHTML = displayedCameras.map(cam => `
+          <div class="relative bg-cctv-card border border-cctv-border hover:border-cyan-600/60 rounded-xl overflow-hidden shadow-2xl transition group flex flex-col" id="card-${cam.id}">
+            
+            <!-- Video Canvas Area -->
+            <div class="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center select-none" id="player-${cam.id}">
+              <canvas id="canvas-${cam.id}" width="960" height="540" class="w-full h-full object-cover"></canvas>
+              
+              <!-- Scanline Overlay -->
+              <div class="cctv-scanlines absolute inset-0 z-10 pointer-events-none"></div>
+
+              <!-- Top Floating Bar Inside Video -->
+              <div class="absolute top-2 left-2 right-2 flex items-center justify-between z-20 pointer-events-none font-mono">
+                <div class="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 text-[11px] text-white">
+                  <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                  <span class="font-bold text-red-400">● LIVE</span>
+                  <span class="text-slate-300">|</span>
+                  <span class="text-cyan-300 font-semibold">${cam.code}</span>
+                </div>
+                <div class="bg-black/70 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 text-[10px] text-emerald-400 hidden sm:block">
+                  WebRTC (P2P &lt;140ms)
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Bottom Camera Control Bar -->
+            <div class="p-2.5 bg-cctv-surface/90 border-t border-cctv-border flex items-center justify-between gap-2 text-xs">
+              <div class="min-w-0">
+                <div class="font-bold text-white truncate text-xs sm:text-sm font-mono flex items-center gap-1.5">
+                  <i data-lucide="camera" class="w-3.5 h-3.5 text-cyan-400 flex-shrink-0"></i>
+                  <span class="truncate">${cam.name}</span>
+                </div>
+                <div class="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                  <span>${cam.location}</span>
+                  <span>•</span>
+                  <span class="text-cyan-300">${cam.grade}</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-1.5 flex-shrink-0 font-mono">
+                <!-- Snapshot Button -->
+                <button 
+                  onclick="captureSnapshot('${cam.id}', '${cam.name}')" 
+                  title="Chụp ảnh Snapshot màn hình này (.png)"
+                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-cctv-card border border-cctv-border hover:border-cyan-500 hover:text-cyan-400 text-slate-300 transition"
+                >
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                  <span class="hidden sm:inline">Chụp Ảnh</span>
+                </button>
+
+                <!-- Fullscreen Button -->
+                <button 
+                  onclick="toggleFullscreen('player-${cam.id}')" 
+                  title="Phóng to toàn màn hình"
+                  class="p-1.5 rounded-lg bg-cctv-card border border-cctv-border hover:border-cyan-500 hover:text-cyan-400 text-slate-300 transition"
+                >
+                  <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        `).join('');
+
+        if (window.lucide) lucide.createIcons();
+
+        // Start HTML5 Canvas Simulators for each rendered camera
+        displayedCameras.forEach(cam => {
+          initCameraCanvas(cam, parent);
+        });
+      }
+
+      // ==========================================
+      // 5. HTML5 CANVAS SIMULATION ENGINE
+      // Dynamic WebRTC Rendering + Floating Watermark
+      // + Privacy Shutter Outside Office Hours
+      // ==========================================
+      function initCameraCanvas(camera, parent) {
+        const canvas = document.getElementById(`canvas-${camera.id}`);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        // Dynamic bouncing watermark coordinates
+        let wmX = 40 + Math.random() * 200;
+        let wmY = 60 + Math.random() * 100;
+        let wmDx = 0.8 + Math.random() * 0.4;
+        let wmDy = 0.6 + Math.random() * 0.4;
+
+        // Dynamic metrics fluctuation for authentic CCTV realism
+        let frameCount = 0;
+        let fpsDisplay = 29.8;
+        let bitrateDisplay = camera.bitrate;
+
+        // Visual state seeds for classroom simulation
+        let cloudOffset = Math.random() * 100;
+        let swingAngle = 0;
+        let wavePhase = 0;
+        let toyBallX = 200;
+        let toyBallSpeed = 0.5;
+
+        function renderFrame() {
+          frameCount++;
+          const width = canvas.width;
+          const height = canvas.height;
+          const isStreaming = isSchoolStreamingActive();
+
+          ctx.clearRect(0, 0, width, height);
+
+          // ----------------------------------------------------
+          // CASE 1: OFF-HOURS PRIVACY SHUTTER (BẢO VỆ RIÊNG TƯ)
+          // ----------------------------------------------------
+          if (!isStreaming) {
+            // Draw high-tech privacy shutter background
+            ctx.fillStyle = '#0B111E';
+            ctx.fillRect(0, 0, width, height);
+
+            // Shutter grid lines
+            ctx.strokeStyle = '#16223B';
+            ctx.lineWidth = 1;
+            for (let y = 0; y < height; y += 24) {
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(width, y);
+              ctx.stroke();
+            }
+
+            // Central rotating radar ring
+            const centerX = width / 2;
+            const centerY = height / 2 - 20;
+            const radarRadius = 70;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // Outer Shield Circle
+            ctx.strokeStyle = '#1E3A8A';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, radarRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Radar sweep arc
+            const sweepAngle = (frameCount * 0.04) % (Math.PI * 2);
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, radarRadius, sweepAngle, sweepAngle + 0.8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Lock Icon in center
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.roundRect(-20, -10, 40, 32, 6);
+            ctx.fill();
+
+            ctx.strokeStyle = '#FCA5A5';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, -10, 14, Math.PI, 0);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // Privacy Notice Text
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#F87171';
+            ctx.font = 'bold 20px "JetBrains Mono", monospace';
+            ctx.fillText('LẮP KHÓA BẢO VỆ RIÊNG TƯ (PRIVACY SHIELD)', centerX, centerY + 100);
+
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillText('Camera tạm khóa ngoài giờ học để đảm bảo quyền riêng tư của giáo viên & trẻ.', centerX, centerY + 130);
+
+            ctx.fillStyle = '#38BDF8';
+            ctx.font = '12px "JetBrains Mono", monospace';
+            ctx.fillText('Khung giờ mở giám sát: 07:30 - 17:00 (Thứ Hai đến Thứ Sáu)', centerX, centerY + 155);
+
+            // Shutter OSD overlay
+            renderOsdHeader(ctx, width, height, camera, false);
+
+            const animId = requestAnimationFrame(renderFrame);
+            activeCanvasLoops.set(camera.id, animId);
+            return;
+          }
+
+          // ----------------------------------------------------
+          // CASE 2: LIVE STREAM CLASSROOM RENDERING (TRONG GIỜ)
+          // ----------------------------------------------------
+
+          // Background specific to camera type
+          drawCameraScene(ctx, width, height, camera.type, frameCount);
+
+          // Subtle CCTV noise grain
+          drawCctvNoise(ctx, width, height);
+
+          // OSD Overlays (Timestamp, Resolution, FPS, Bitrate)
+          if (state.showOsd) {
+            renderOsdHeader(ctx, width, height, camera, true);
+          }
+
+          // ----------------------------------------------------
+          // CRITICAL: DYNAMIC FLOATING WATERMARK (CHỐNG QUAY LÉN)
+          // ----------------------------------------------------
+          drawDynamicWatermark(ctx, width, height, parent);
+
+          const animId = requestAnimationFrame(renderFrame);
+          activeCanvasLoops.set(camera.id, animId);
+        }
+
+        function drawCameraScene(ctx, width, height, type, frame) {
+          // Camera 1: Lớp Mầm 1 - Góc Học Tập
+          if (type === 'study') {
+            // Classroom wall
+            ctx.fillStyle = '#2A364F';
+            ctx.fillRect(0, 0, width, height);
+
+            // Floor
+            ctx.fillStyle = '#1E2536';
+            ctx.fillRect(0, height * 0.65, width, height * 0.35);
+
+            // Wall decorative board (Bảng mầm non)
+            ctx.fillStyle = '#374151';
+            ctx.fillRect(80, 50, 420, 200);
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(80, 50, 420, 200);
+
+            // Colorful children drawings on board
+            ctx.fillStyle = '#EC4899';
+            ctx.font = 'bold 22px Inter';
+            ctx.textAlign = 'left';
+            ctx.fillText('BÉ VUI HỌC CHỮ & HÌNH KHỐI', 110, 95);
+
+            ctx.fillStyle = '#10B981';
+            ctx.font = 'bold 36px "JetBrains Mono"';
+            ctx.fillText('A  B  C  ★  ♥', 110, 150);
+
+            // Analog wall clock with real ticking second hand
+            const clockX = 580;
+            const clockY = 110;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(clockX, clockY, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0F172A';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Clock hands
+            const now = new Date();
+            const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+            const secAngle = (sec / 60) * Math.PI * 2 - Math.PI / 2;
+            ctx.strokeStyle = '#EF4444';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(clockX, clockY);
+            ctx.lineTo(clockX + Math.cos(secAngle) * 30, clockY + Math.sin(secAngle) * 30);
+            ctx.stroke();
+
+            // Study tables & chairs
+            ctx.fillStyle = '#0284C7';
+            ctx.beginPath();
+            ctx.ellipse(320, 420, 180, 60, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Colorful building blocks on table
+            ctx.fillStyle = '#F59E0B';
+            ctx.fillRect(260, 370, 30, 30);
+            ctx.fillStyle = '#10B981';
+            ctx.fillRect(295, 360, 30, 40);
+            ctx.fillStyle = '#EC4899';
+            ctx.fillRect(330, 370, 30, 30);
+
+            // Moving cartoon toy / ball
+            toyBallX += toyBallSpeed;
+            if (toyBallX > 450 || toyBallX < 180) toyBallSpeed = -toyBallSpeed;
+            ctx.fillStyle = '#F43F5E';
+            ctx.beginPath();
+            ctx.arc(toyBallX, 480, 18, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Camera 2: Lớp Mầm 1 - Khu Ăn & Ngủ Trưa
+          else if (type === 'sleep') {
+            // Calm, warm room ambient
+            ctx.fillStyle = '#1B263B';
+            ctx.fillRect(0, 0, width, height);
+
+            // Soft wooden floor
+            ctx.fillStyle = '#151D2A';
+            ctx.fillRect(0, height * 0.6, width, height * 0.4);
+
+            // Cozy kindergarten mini beds (Giường nệm mầm non)
+            for (let i = 0; i < 4; i++) {
+              const bedX = 80 + i * 210;
+              const bedY = 320;
+              ctx.fillStyle = i % 2 === 0 ? '#38BDF8' : '#F472B6';
+              ctx.fillRect(bedX, bedY, 160, 100);
+
+              // Pillows
+              ctx.fillStyle = '#FEF08A';
+              ctx.beginPath();
+              ctx.roundRect(bedX + 20, bedY + 15, 60, 35, 8);
+              ctx.fill();
+
+              // Blanket wave
+              ctx.fillStyle = '#FFFFFF22';
+              ctx.fillRect(bedX, bedY + 50, 160, 50);
+            }
+
+            // Window curtain with gentle sway
+            const curtainWave = Math.sin(frame * 0.03) * 6;
+            ctx.fillStyle = '#FDE68A';
+            ctx.fillRect(720 + curtainWave, 60, 120, 200);
+
+            // Nightlight teddy bear glow
+            ctx.fillStyle = '#FEF08A33';
+            ctx.beginPath();
+            ctx.arc(480, 200, 80, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Camera 3: Sân Chơi Cỏ Ngoài Trời
+          else if (type === 'outdoor') {
+            // Blue Sky
+            ctx.fillStyle = '#0369A1';
+            ctx.fillRect(0, 0, width, height * 0.6);
+
+            // Clouds moving slowly
+            cloudOffset += 0.3;
+            if (cloudOffset > width + 200) cloudOffset = -100;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.arc((cloudOffset) % (width + 200), 80, 45, 0, Math.PI * 2);
+            ctx.arc((cloudOffset + 40) % (width + 200), 70, 55, 0, Math.PI * 2);
+            ctx.arc((cloudOffset + 80) % (width + 200), 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lush Artificial Grass Lawn
+            ctx.fillStyle = '#15803D';
+            ctx.fillRect(0, height * 0.55, width, height * 0.45);
+
+            // Tree leaves blowing in wind
+            const leafSway = Math.sin(frame * 0.04) * 8;
+            ctx.fillStyle = '#166534';
+            ctx.beginPath();
+            ctx.arc(140 + leafSway, 220, 90, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#78350F';
+            ctx.fillRect(125, 290, 30, 120);
+
+            // Spiral Playground Slide (Cầu trượt liên hoàn)
+            ctx.fillStyle = '#EA580C';
+            ctx.fillRect(450, 220, 140, 160);
+            ctx.fillStyle = '#FBBF24';
+            ctx.beginPath();
+            ctx.moveTo(590, 260);
+            ctx.bezierCurveTo(680, 320, 720, 420, 800, 440);
+            ctx.lineTo(800, 470);
+            ctx.bezierCurveTo(700, 450, 660, 340, 590, 290);
+            ctx.closePath();
+            ctx.fill();
+
+            // Swing swaying back and forth (Xích đu)
+            swingAngle = Math.sin(frame * 0.05) * 0.25;
+            ctx.save();
+            ctx.translate(320, 240);
+            ctx.rotate(swingAngle);
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, 140);
+            ctx.stroke();
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(-25, 140, 50, 12);
+            ctx.restore();
+          }
+
+          // Camera 4: Bể Vầy & Cát Nước
+          else if (type === 'pool') {
+            // Deck tiles
+            ctx.fillStyle = '#1E293B';
+            ctx.fillRect(0, 0, width, height);
+
+            // Swimming pool water with gentle waves
+            wavePhase += 0.04;
+            ctx.fillStyle = '#0284C7';
+            ctx.fillRect(100, 180, 760, 300);
+
+            ctx.fillStyle = '#38BDF8';
+            ctx.beginPath();
+            ctx.moveTo(100, 220);
+            for (let x = 100; x <= 860; x += 30) {
+              const y = 220 + Math.sin(wavePhase + x * 0.02) * 8;
+              ctx.lineTo(x, y);
+            }
+            ctx.lineTo(860, 480);
+            ctx.lineTo(100, 480);
+            ctx.closePath();
+            ctx.fill();
+
+            // Floating yellow rubber duck
+            const duckY = 280 + Math.sin(wavePhase * 1.5) * 6;
+            ctx.fillStyle = '#FACC15';
+            ctx.beginPath();
+            ctx.arc(420, duckY, 24, 0, Math.PI * 2);
+            ctx.fill();
+            // Beak
+            ctx.fillStyle = '#EA580C';
+            ctx.beginPath();
+            ctx.arc(442, duckY - 2, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Parasol Umbrella
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(760, 140, 70, Math.PI, 0);
+            ctx.fill();
+            ctx.strokeStyle = '#E2E8F0';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(760, 140);
+            ctx.lineTo(760, 300);
+            ctx.stroke();
+          }
+
+          // Camera 5: Nhà Ăn & Bếp Dinh Dưỡng
+          else if (type === 'kitchen') {
+            // White clean tiled kitchen
+            ctx.fillStyle = '#1E293B';
+            ctx.fillRect(0, 0, width, height);
+
+            // Stainless steel counter
+            ctx.fillStyle = '#64748B';
+            ctx.fillRect(120, 260, 720, 140);
+            ctx.fillStyle = '#94A3B8';
+            ctx.fillRect(120, 250, 720, 15);
+
+            // Steam from food cooker
+            const steamY = (frame * 1.5) % 80;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.beginPath();
+            ctx.arc(320, 230 - steamY, 20 + steamY * 0.3, 0, Math.PI * 2);
+            ctx.arc(350, 220 - steamY * 0.8, 25 + steamY * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // UV Sterilization Cabinet (Tủ sấy tiệt trùng chén bát)
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(620, 100, 200, 180);
+            ctx.strokeStyle = '#A855F7';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(620, 100, 200, 180);
+            // Violet UV light glow
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.2)';
+            ctx.fillRect(625, 105, 190, 170);
+
+            ctx.fillStyle = '#D8B4FE';
+            ctx.font = 'bold 12px "JetBrains Mono"';
+            ctx.fillText('UV TIỆT TRÙNG 100%', 650, 140);
+          }
+
+          // Camera 6: Cổng Đón Trẻ & Sảnh Lễ Tân
+          else {
+            // School Gate & Garden
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(0, 0, width, height);
+
+            // Kindergarten Arch Welcome Sign
+            ctx.fillStyle = '#0284C7';
+            ctx.beginPath();
+            ctx.arc(width / 2, 140, 260, Math.PI, 0);
+            ctx.lineWidth = 16;
+            ctx.strokeStyle = '#38BDF8';
+            ctx.stroke();
+
+            ctx.fillStyle = '#FEF08A';
+            ctx.font = 'bold 24px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('TRƯỜNG MẦM NON QUỐC TẾ KIDS-CAM', width / 2, 110);
+
+            // Yellow School Bus at Gate
+            ctx.fillStyle = '#EAB308';
+            ctx.fillRect(100, 300, 240, 120);
+            ctx.fillStyle = '#0F172A';
+            ctx.beginPath();
+            ctx.arc(150, 420, 25, 0, Math.PI * 2);
+            ctx.arc(290, 420, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bus Windows
+            ctx.fillStyle = '#0284C7';
+            ctx.fillRect(120, 320, 45, 40);
+            ctx.fillRect(180, 320, 45, 40);
+            ctx.fillRect(240, 320, 45, 40);
+          }
+        }
+
+        function drawCctvNoise(ctx, width, height) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+          for (let i = 0; i < 40; i++) {
+            const rx = Math.random() * width;
+            const ry = Math.random() * height;
+            ctx.fillRect(rx, ry, Math.random() * 4, Math.random() * 2);
+          }
+        }
+
+        function renderOsdHeader(ctx, width, height, cam, isLive) {
+          ctx.save();
+          ctx.font = '13px "JetBrains Mono", monospace';
+          ctx.textAlign = 'left';
+
+          // Live timestamp with real ms
+          const now = new Date();
+          const yr = now.getFullYear();
+          const mo = String(now.getMonth() + 1).padStart(2, '0');
+          const dy = String(now.getDate()).padStart(2, '0');
+          const hr = String(now.getHours()).padStart(2, '0');
+          const mi = String(now.getMinutes()).padStart(2, '0');
+          const sc = String(now.getSeconds()).padStart(2, '0');
+          const ms = String(Math.floor(now.getMilliseconds() / 10)).padStart(2, '0');
+          const timeString = `${yr}-${mo}-${dy} ${hr}:${mi}:${sc}.${ms}`;
+
+          // Top Right: Precision Timestamp
+          ctx.textAlign = 'right';
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(width - 290, 15, 275, 24);
+          ctx.fillStyle = '#38BDF8';
+          ctx.fillText(`${timeString} UTC+7`, width - 20, 32);
+
+          // Bottom Left Metrics Bar
+          ctx.textAlign = 'left';
+          ctx.fillStyle = 'rgba(0,0,0,0.65)';
+          ctx.fillRect(15, height - 38, 480, 26);
+
+          if (frameCount % 45 === 0) {
+            fpsDisplay = (29.7 + Math.random() * 0.6).toFixed(1);
+            bitrateDisplay = Math.round(cam.bitrate + (Math.random() * 40 - 20));
+          }
+
+          ctx.fillStyle = '#E2E8F0';
+          ctx.fillText(`RES: ${cam.resolution} | FPS: ${fpsDisplay} | BR: ${bitrateDisplay} Kbps | H.264`, 24, height - 21);
+
+          // Bottom Right Signal & Protocol
+          ctx.textAlign = 'right';
+          ctx.fillStyle = 'rgba(0,0,0,0.65)';
+          ctx.fillRect(width - 240, height - 38, 225, 26);
+          ctx.fillStyle = '#34D399';
+          ctx.fillText('LAN: 1000M • SIGNAL: 99%', width - 20, height - 21);
+
+          ctx.restore();
+        }
+
+        // DYNAMIC FLOATING WATERMARK LOGIC
+        function drawDynamicWatermark(ctx, width, height, parent) {
+          ctx.save();
+
+          // 1. Static subtle watermark pattern in background (Anti-leak pattern)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
+          ctx.font = '14px "JetBrains Mono", monospace';
+          ctx.rotate(-0.15);
+          for (let y = -50; y < height + 200; y += 120) {
+            for (let x = -100; x < width + 200; x += 360) {
+              ctx.fillText(`KIDS-CAM SECURE • ${parent.phone}`, x, y);
+            }
+          }
+          ctx.restore();
+
+          // 2. High-visibility moving bouncing watermark (DVD Screensaver effect)
+          ctx.save();
+          wmX += wmDx;
+          wmY += wmDy;
+
+          const textString = `KIDS-CAM SECURE • PHỤ HUYNH: ${parent.name.toUpperCase()} • SĐT: ${parent.phone} • IP: ${parent.ip}`;
+          ctx.font = 'bold 13px "JetBrains Mono", monospace';
+          const textMetrics = ctx.measureText(textString);
+          const boxWidth = textMetrics.width + 24;
+          const boxHeight = 28;
+
+          // Bounce off canvas boundaries
+          if (wmX + boxWidth > width - 10) {
+            wmX = width - 10 - boxWidth;
+            wmDx = -Math.abs(wmDx);
+          } else if (wmX < 10) {
+            wmX = 10;
+            wmDx = Math.abs(wmDx);
+          }
+
+          if (wmY + boxHeight > height - 40) {
+            wmY = height - 40 - boxHeight;
+            wmDy = -Math.abs(wmDy);
+          } else if (wmY < 50) {
+            wmY = 50;
+            wmDy = Math.abs(wmDy);
+          }
+
+          // Semi-transparent pill backdrop
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+          ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(wmX, wmY, boxWidth, boxHeight, 4);
+          ctx.fill();
+          ctx.stroke();
+
+          // Watermark text in cyan/amber
+          ctx.fillStyle = 'rgba(224, 242, 254, 0.65)';
+          ctx.textAlign = 'left';
+          ctx.fillText(textString, wmX + 12, wmY + 18);
+
+          ctx.restore();
+        }
+
+        // Kickoff first frame
+        renderFrame();
+      }
+
+      // ==========================================
+      // 6. SNAPSHOT & FULLSCREEN FEATURES
+      // ==========================================
+      function captureSnapshot(camId, camName) {
+        const canvas = document.getElementById(`canvas-${camId}`);
+        if (!canvas) {
+          showToast('Không tìm thấy khung hình canvas', 'alert');
+          return;
+        }
+
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          const time = new Date().toISOString().replace(/[:.]/g, '-');
+          link.download = `KidsCam_${camId}_${time}.png`;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          showToast(`Đã chụp ảnh snapshot thành công: ${camName}`, 'success');
+        } catch (err) {
+          showToast('Lỗi khi tải ảnh: ' + err.message, 'alert');
+        }
+      }
+
+      function toggleFullscreen(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        if (!document.fullscreenElement) {
+          el.requestFullscreen().catch(err => {
+            showToast('Không thể mở toàn màn hình: ' + err.message, 'warn');
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      }
+
+      // ==========================================
+      // 7. ADMIN DASHBOARD ACTIONS
+      // ==========================================
+      function setAdminTab(tabKey) {
+        state.adminActiveTab = tabKey;
+        const tabs = ['Cameras', 'Parents', 'Streamer', 'Logs'];
+        tabs.forEach(t => {
+          const btn = document.getElementById(`tabBtn${t}`);
+          const content = document.getElementById(`adminTabContent${t}`);
+          if (t.toLowerCase() === tabKey) {
+            btn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-cyan-400 bg-cctv-surface border border-cctv-border";
+            content.classList.remove('hidden');
+          } else {
+            btn.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-400 hover:text-white";
+            content.classList.add('hidden');
+          }
+        });
+
+        renderAdminSection();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function renderAdminSection() {
+        // Update Stats
+        const statCamCount = document.getElementById('statCamCount');
+        const statParentCount = document.getElementById('statParentCount');
+        const statLiveSessions = document.getElementById('statLiveSessions');
+        if (statCamCount) statCamCount.textContent = `${state.cameras.length}/${state.cameras.length}`;
+        if (statParentCount) statParentCount.textContent = state.parents.length;
+        if (statLiveSessions) statLiveSessions.textContent = state.accessLogs.filter(l => l.status === 'active').length;
+
+        // Render Tables
+        renderCameraTable();
+        renderParentTable();
+        renderAccessLogsTable();
+      }
+
+      function renderCameraTable() {
+        const tbody = document.getElementById('cameraTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = state.cameras.map(cam => `
+          <tr class="hover:bg-cctv-surface/60 transition">
+            <td class="px-4 py-3">
+              <div class="font-bold text-white">${cam.name}</div>
+              <div class="text-[11px] text-cyan-400">${cam.code}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-slate-200">${cam.location}</div>
+              <div class="text-[11px] text-slate-400">${cam.grade}</div>
+            </td>
+            <td class="px-4 py-3 text-[11px] text-slate-400 max-w-xs truncate" title="${cam.rtspSub}">
+              ${cam.rtspSub}
+            </td>
+            <td class="px-4 py-3 text-[11px]">
+              <div>${cam.resolution} @ ${cam.fps}fps</div>
+              <div class="text-emerald-400">${cam.bitrate} Kbps</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                ONLINE
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5 font-mono">
+                <button onclick="restartCameraStream('${cam.id}', '${cam.name}')" title="Khởi động lại luồng" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="deleteCamera('${cam.id}')" title="Xóa Camera" class="p-1 rounded bg-slate-800 hover:bg-red-900/60 text-red-400">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function renderParentTable() {
+        const tbody = document.getElementById('parentTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = state.parents.map(parent => `
+          <tr class="hover:bg-cctv-surface/60 transition font-mono">
+            <td class="px-4 py-3">
+              <div class="font-bold text-white">${parent.name}</div>
+              <div class="text-[11px] text-cyan-400">${parent.phone}</div>
+              <div class="text-[10px] text-slate-500">${parent.email}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="text-pink-300 font-semibold">${parent.childName}</div>
+              <div class="text-[11px] text-slate-400">${parent.childClass}</div>
+              <div class="text-[10px] text-slate-500">${parent.teacher}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 text-[11px] font-bold border border-cyan-800">
+                  ${parent.allowedCamIds.length} Camera được gán
+                </span>
+              </div>
+              <div class="text-[10px] text-slate-400 truncate max-w-xs">
+                ${parent.allowedCamIds.join(', ')}
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">
+                HOẠT ĐỘNG
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button onclick="openPermissionModal('${parent.id}')" class="flex items-center gap-1 px-2 py-1 rounded bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-[11px]">
+                  <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+                  <span>Phân Quyền</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function renderAccessLogsTable() {
+        const tbody = document.getElementById('accessLogsTableBody');
+        if (!tbody) return;
+
+        const keyword = (document.getElementById('logSearchInput')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('logStatusFilter')?.value || 'all';
+
+        const filtered = state.accessLogs.filter(log => {
+          const matchKw = log.parentName.toLowerCase().includes(keyword) ||
+                          log.parentPhone.includes(keyword) ||
+                          log.ip.includes(keyword) ||
+                          log.cameraName.toLowerCase().includes(keyword);
+
+          if (!matchKw) return false;
+          if (statusFilter === 'active') return log.status === 'active';
+          if (statusFilter === 'closed') return log.status === 'closed';
+          if (statusFilter === 'warning') return !!log.warning;
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-4 py-6 text-center text-slate-500 font-mono">
+                Không tìm thấy phiên truy cập nào khớp với bộ lọc
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(log => `
+          <tr class="hover:bg-cctv-surface/60 transition">
+            <td class="px-4 py-3 text-slate-300">${log.time}</td>
+            <td class="px-4 py-3">
+              <div class="font-bold text-white">${log.parentName}</div>
+              <div class="text-[11px] text-cyan-400">${log.parentPhone}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-200 font-semibold">${log.cameraName}</td>
+            <td class="px-4 py-3">
+              <div class="text-cyan-300 font-bold">${log.ip}</div>
+              <div class="text-[10px] text-slate-400">${log.device}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-300">${log.duration}</td>
+            <td class="px-4 py-3">
+              ${log.status === 'active' 
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ĐANG XEM
+                   </span>`
+                : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">ĐÃ NGẮT</span>`
+              }
+              ${log.warning ? `<div class="text-[10px] text-amber-400 mt-1">⚠ ${log.warning}</div>` : ''}
+            </td>
+            <td class="px-4 py-3 text-right">
+              ${log.status === 'active' 
+                ? `<button onclick="kickUserSession('${log.id}', '${log.parentName}')" class="px-2 py-1 rounded bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 text-[11px] transition">
+                    Ngắt Phiên
+                   </button>`
+                : `<span class="text-slate-600 text-[10px]">--</span>`
+              }
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function filterLogs() {
+        renderAccessLogsTable();
+      }
+
+      function refreshAccessLogs() {
+        showToast('Đã làm mới dữ liệu nhật ký truy cập', 'info');
+        renderAccessLogsTable();
+      }
+
+      function kickUserSession(logId, name) {
+        const log = state.accessLogs.find(l => l.id === logId);
+        if (log) {
+          log.status = 'closed';
+          log.warning = 'Bị quản trị viên cưỡng chế ngắt phiên (Session Terminated)';
+        }
+        showToast(`Đã cưỡng chế ngắt phiên xem của: ${name}`, 'warn');
+        renderAdminSection();
+      }
+
+      function exportLogsToCsv() {
+        const headers = ['ID', 'Thời Gian', 'Phụ Huynh', 'SĐT', 'Camera', 'IP', 'Thiết Bị', 'Thời Lượng', 'Trạng Thái', 'Cảnh Báo'];
+        const rows = state.accessLogs.map(l => [
+          l.id, l.time, l.parentName, l.parentPhone, l.cameraName, l.ip, l.device, l.duration, l.status, l.warning || 'None'
+        ]);
+
+        let csvContent = "data:text/csv;charset=utf-8," 
+          + headers.join(',') + "\n"
+          + rows.map(e => e.map(val => `"${val}"`).join(',')).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `KidsCam_Access_Logs_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Đã xuất file báo cáo Access Logs thành công!', 'success');
+      }
+
+      // ==========================================
+      // 8. MODAL HANDLERS
+      // ==========================================
+      function openPermissionModal(parentId) {
+        state.editingParentId = parentId;
+        const parent = state.parents.find(p => p.id === parentId);
+        if (!parent) return;
+
+        document.getElementById('modalParentName').textContent = parent.name + ' - ' + parent.childName;
+        document.getElementById('modalParentInfo').textContent = `SĐT: ${parent.phone} • Lớp: ${parent.childClass}`;
+
+        const checklistEl = document.getElementById('modalCameraChecklist');
+        checklistEl.innerHTML = state.cameras.map(cam => {
+          const isChecked = parent.allowedCamIds.includes(cam.id);
+          return `
+            <label class="flex items-center gap-3 p-2 rounded-lg bg-cctv-surface hover:bg-cctv-surface/80 border border-cctv-border cursor-pointer select-none">
+              <input type="checkbox" name="permCam" value="${cam.id}" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 bg-slate-900 border-slate-700" />
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-white truncate font-mono">${cam.name}</div>
+                <div class="text-[10px] text-slate-400">${cam.location} • ${cam.grade}</div>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        document.getElementById('permissionModal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function closePermissionModal() {
+        document.getElementById('permissionModal').classList.add('hidden');
+        state.editingParentId = null;
+      }
+
+      function checkAllPermissions(checked) {
+        const checkboxes = document.querySelectorAll('input[name="permCam"]');
+        checkboxes.forEach(cb => cb.checked = checked);
+      }
+
+      function saveParentPermissions() {
+        if (!state.editingParentId) return;
+        const checkboxes = document.querySelectorAll('input[name="permCam"]:checked');
+        const selectedCamIds = Array.from(checkboxes).map(cb => cb.value);
+
+        const parent = state.parents.find(p => p.id === state.editingParentId);
+        if (parent) {
+          parent.allowedCamIds = selectedCamIds;
+          showToast(`Đã lưu cấu hình phân quyền (${selectedCamIds.length} camera) cho ${parent.name}`, 'success');
+        }
+
+        closePermissionModal();
+        renderAdminSection();
+        renderParentSection();
+      }
+
+      // Camera Add Modal
+      function openAddCameraModal() {
+        document.getElementById('addCameraModal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function closeAddCameraModal() {
+        document.getElementById('addCameraModal').classList.add('hidden');
+      }
+
+      function handleAddNewCamera(e) {
+        e.preventDefault();
+        const name = document.getElementById('newCamName').value;
+        const code = document.getElementById('newCamCode').value;
+        const location = document.getElementById('newCamLocation').value;
+        const grade = document.getElementById('newCamGrade').value;
+        const rtsp = document.getElementById('newCamRtsp').value;
+
+        const newId = 'cam-' + (state.cameras.length + 1);
+        state.cameras.push({
+          id: newId,
+          name,
+          code,
+          location,
+          grade,
+          rtspSub: rtsp,
+          rtspMain: rtsp.replace('sub', 'main'),
+          resolution: '1920x1080',
+          fps: 30,
+          bitrate: 850,
+          status: 'online',
+          type: 'study'
+        });
+
+        showToast(`Đã thêm camera mới: ${code}`, 'success');
+        closeAddCameraModal();
+        document.getElementById('addCamForm').reset();
+        renderAdminSection();
+        renderParentSection();
+      }
+
+      function deleteCamera(camId) {
+        if (!confirm('Bạn có chắc muốn xóa camera này khỏi trạm điều khiển?')) return;
+        state.cameras = state.cameras.filter(c => c.id !== camId);
+        state.parents.forEach(p => {
+          p.allowedCamIds = p.allowedCamIds.filter(id => id !== camId);
+        });
+        showToast('Đã xóa camera thành công', 'warn');
+        renderAdminSection();
+        renderParentSection();
+      }
+
+      function restartCameraStream(camId, name) {
+        showToast(`Đã gửi lệnh khởi động lại luồng RTSP cho: ${name}`, 'info');
+      }
+
+      // Parent Add Modal
+      function openAddParentModal() {
+        document.getElementById('addParentModal').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function closeAddParentModal() {
+        document.getElementById('addParentModal').classList.add('hidden');
+      }
+
+      function handleAddNewParent(e) {
+        e.preventDefault();
+        const name = document.getElementById('newParentName').value;
+        const phone = document.getElementById('newParentPhone').value;
+        const childName = document.getElementById('newParentChild').value;
+        const childClass = document.getElementById('newParentClass').value;
+        const email = document.getElementById('newParentEmail').value;
+
+        const newId = 'p' + (state.parents.length + 1);
+        state.parents.push({
+          id: newId,
+          name,
+          phone,
+          email,
+          childName,
+          childClass,
+          teacher: 'Ban Giám Hiệu',
+          allowedCamIds: ['cam-6'], // default to gate camera
+          status: 'active',
+          ip: '113.161.' + Math.floor(Math.random() * 200) + '.' + Math.floor(Math.random() * 200)
+        });
+
+        showToast(`Đã tạo tài khoản phụ huynh cho ${name}`, 'success');
+        closeAddParentModal();
+        document.getElementById('addParentForm').reset();
+        renderAdminSection();
+        renderParentSection();
+      }
+
+      // Streamer & Cloudflare configs
+      function testRestreamerPing() {
+        showToast('Ping go2rtc API (1984): OK • Độ trễ: 2ms • 0 luồng lỗi', 'success');
+      }
+
+      function saveStreamerConfig() {
+        showToast('Đã cập nhật cấu hình Re-streamer Core', 'success');
+      }
+
+      function pingCloudflareTunnel() {
+        showToast('Ping Cloudflare Edge: 4/4 hops HEALTHY • Round-trip: 14.8ms', 'success');
+      }
+
+      function restartTunnelService() {
+        showToast('Đã gửi tín hiệu khởi động lại connector Cloudflare Tunnel', 'info');
+      }
+
+      // ==========================================
+      // 9. TOAST NOTIFICATION UTILITY
+      // ==========================================
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `flex items-center gap-2 px-3.5 py-2.5 rounded-lg shadow-xl text-xs font-mono border backdrop-blur-md transition-all duration-300 transform translate-x-full opacity-0 pointer-events-auto max-w-sm ${
+          type === 'success' ? 'bg-emerald-950/90 border-emerald-700 text-emerald-200' :
+          type === 'warn' ? 'bg-amber-950/90 border-amber-700 text-amber-200' :
+          type === 'alert' ? 'bg-red-950/90 border-red-700 text-red-200' :
+          'bg-cyan-950/90 border-cyan-700 text-cyan-200'
+        }`;
+
+        let iconName = type === 'success' ? 'check-circle' :
+                       type === 'warn' ? 'alert-triangle' :
+                       type === 'alert' ? 'alert-octagon' : 'info';
+
+        toast.innerHTML = `
+          <i data-lucide="${iconName}" class="w-4 h-4 flex-shrink-0"></i>
+          <span class="flex-1">${message}</span>
+        `;
+
+        container.appendChild(toast);
+        if (window.lucide) lucide.createIcons();
+
+        // Animate in
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-x-full', 'opacity-0');
+        });
+
+        // Remove after 3.2s
+        setTimeout(() => {
+          toast.classList.add('translate-x-full', 'opacity-0');
+          setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 300);
+        }, 3200);
+      }
+
+      // ==========================================
+      // 10. APP BOOTSTRAP
+      // ==========================================
+      window.addEventListener('DOMContentLoaded', () => {
+        updateClockAndScheduleBadge();
+        setAppRole('parent');
+      });
+    </script>
+
+  </body>
+</html>
